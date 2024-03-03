@@ -11,13 +11,14 @@ st.title("Confidence Interval Playground")
 col1 , col2 = st.columns([0.2,0.8])
 container1 = col1.container(border=True)
 with container1:
-    sample_size = st.number_input("Enter Sample Size (2-100)",min_value=2, max_value = 200, value=50)
-    population_mean = st.number_input("Enter Population Mean",min_value=2, max_value = 1000, value=100)
+    sample_size = st.number_input("Enter Sample Size",min_value=2, max_value = 200, value=50)
+    population_mean = st.number_input("Enter Population Mean",min_value=2, max_value = 1000, value=50)
     population_std  =st.number_input("Enter Population Standard Deviation (greater than 0)",min_value=1, max_value = 1000, value=25)
     iterations = st.number_input("Enter Number of Iterations",min_value=1, max_value = 1000, value=100)
     confidence_level = st.number_input("Enter Confidence Interval value (0-100)",min_value=0, max_value = 100, value=95)
-    method = st.selectbox("choose method",["Z using σ"," Z using s"])
+    method = st.selectbox("choose method",["Z Stats using σ","Z Stats using s", "T Stats using s"])
 
+np.random.seed(42) 
 lower_interval = []
 upper_interval = []
 passing_thorugh_mean = 0
@@ -25,10 +26,19 @@ for i in range(int(iterations)):
     sample = np.random.normal(loc = (population_mean), scale = (population_std) , size = (sample_size))
 
     sample_mean = np.mean(sample)
-    sample_std_dev = np.std(sample)
+    sample_std = np.std(sample)
 
-    critical_value = stats.norm.ppf((1 + confidence_level / 100) / 2)
-    margin_of_error = critical_value * (population_std / np.sqrt(sample_size))
+    if method == "Z Stats using σ":
+        critical_value = stats.norm.ppf((1 + confidence_level / 100) / 2)
+        margin_of_error = critical_value * (population_std / np.sqrt(sample_size))
+
+    elif method == "Z Stats using s":
+        critical_value = stats.norm.ppf((1 + confidence_level / 100) / 2)
+        margin_of_error = critical_value * (sample_std/ np.sqrt(sample_size))
+
+    else:  
+        critical_value = stats.t.ppf((1 + confidence_level / 100) / 2, df=sample_size - 1)
+        margin_of_error = critical_value * (sample_std / np.sqrt(sample_size))
 
     lower_interval.append(sample_mean - margin_of_error)
     upper_interval.append(sample_mean + margin_of_error)
@@ -59,7 +69,7 @@ with container2:
 
 
         ax.tick_params(axis='x', colors='white')
-        ax.tick_params(axis='y', colors='white')
+        ax.tick_params(axis='y', colors='black', labelsize =20)
         for spine in ax.spines.values():
             spine.set_edgecolor('white')
         plt.legend(fontsize = "xx-large")
